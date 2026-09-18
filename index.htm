@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrator</title>
+<link  id="favicon" rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAN6SURBVFhH7ZfNTxNBFMDn7baKKCWgoIdywhN64qDiCUi0JFLQQ/kDKJ44KA3RgxwIJpoYaTUcbbkLGAVqQg8YOOGJG5wgeuAEIkLUBLe7z/em09LdrXxZYyL+ks3Mm5mdeTvz5r234sgDqpREum4EBOo+Je5KNDExqqounPMYpT9SQ0NTW0q0oalSgghRC3BxrwfReqxecdETbl3gMn+857t3pKczGJUDHHhUmePRw1AdqTKixALg6IO+sW0l5LjXdcufRqO/urE8kAacAwF+1UVgZPXd1vuermA4Fp9MqEaJbQd+hzSaDRZAzL04A9GqpvIQbXFENeQomgK06aEzTaf87sUVIK74GssbIuFW2+4WUQGCbEjVXJC1N+imWaPEHMVV4BAUVQHUPW2q6gZFqry6aklJOYqogDa6Pr1RgkLMqQY7gKmPrz7MRxPJDtUiKZoC7GwAxaCBooWsfVk1S6i9fX1mcxHAfQtsnpCdCAitX4m/hBxRNDacdBkUw1aOAKQM5Hk+K0ALLQwmkjHVkMOmQO/tm7V0n0uUKNERryNqy5Zm/6pn8Unp8QqRnQcsHEcN2s0TxhK5Ypfz2heRcFvoblfwghIPRNYt78a/dQ0Pg9MIx6k4n5EUKDisbtPIA58hGWItgt12yFumYsOTrtsg2evM9nOmTl/v5M/GgkPw920gf1ttZ+Y4Kx6X7dc1T9vTF2/kOE6/OJOSgwgOxyhwheuFxmX7Y4mkvNoe9lADA6GEpkEuhyvxQqr3/ss4122ZjoYNWhpX1ma/dt/pbB19Ppyc49yPlOrIZFI79PWNcZIinRovTsrXVTaX0QeBz7Ag1YPBaPqk0S9TMtCQvyA3wTfDuqiqNInRb5SmuynTWaJJ/KiLrcprFfWfpzcayeOtWpalRrrSOBl0ZIJKVDSXLVKiOA4Ax48JXKbF6zlX3I8N+M5erpzfyXTAp5kmK7PldNsFoR2yhLYCqE3x4rINoPbcpdO0w1izLyN0xnmObqp6AOyRUKfN4VIqQEEjRQMoz888mlff5HbGRBHj7QbTukpOifsjn2a/bIOw/PaAtPN+5snA/w9giTBnxUhz8Rw6ipq1mc2QF7wBiISDm1mrzYeNM5s8cHQzrfSE7CA4rkfjb0lp+gwKVvI/wekpyYNSJGzJKskpeX5WzIs/ib92rfufo4YQPwEKcq+tNi12dwAAAABJRU5ErkJggg==">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Fixed Header -->
+  <header>
+    <h1>Family History</h1>
+  </header>
+
+  <!-- Main Content Layout -->
+  <div class="container" id="container">
+    <!-- Left Sidebar Panel -->
+    <div class="left-panel" id="left-panel">
+      <div id="left-panel-header">
+        <div class="tree-control">
+          <span id="indexTitle">index title </span>
+          <span class="tooltip" id="stats">
+            Loading statistics...
+          </span>
+        </div>
+        <div class="tree-control">
+          <span>&#128712;</span>
+          <button class="tooltip">
+            <strong>Instructions:</strong><br/>Click on letter headers or name group headers to expand/collapse sections.<br/>Click on individual names to see details.
+          </button>
+        </div>
+        <div class="tree-controls" style="float:right;  font-size: 1.5em;">
+         <button id="expandAllBtn" class="tree-control">&oplus;
+          <span class="tooltip">Expand All</span>
+         </button>
+        <button id="collapseAllBtn" class="tree-control">&ominus;
+          <span class="tooltip">Collapse All</span>
+        </button>
+       </div>
+      </div>
+      <input type="text" class="search-box" id="searchBox" placeholder="&#x1F50D; Search by name...">
+      <div class="container panel">
+        <div class="tree-container" id="treeContainer">
+          Loading tree index...
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical Splitter Handle -->
+    <div class="gutter gutter-horizontal" id="gutter-col"></div>
+
+    <!-- Right Stacked Container -->
+    <div class="right-container" id="right-container">
+      
+      <!-- Right Top Panel -->
+      <div class="panel right-top" id="right-top">
+        <h2>Right Top Panel</h2>
+        <p>Drag the horizontal handle below to resize this pane.</p>
+      </div>
+
+      <!-- Horizontal Splitter Handle -->
+      <div class="gutter gutter-vertical" id="gutter-row"></div>
+
+      <!-- Right Bottom Panel -->
+      <div class="panel right-bottom" id="right-bottom">
+        <h2>Right Bottom Panel</h2>
+        <p>This panel automatically fills the remaining vertical space.</p>
+      </div>
+    </div>
+<script type="module" src="../js/Startup.js"></script>
+</body>
+</html>

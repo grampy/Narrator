@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resizable Dashboard Layout</title>
+  <style>
+    /* CSS Variables & Reset */
+    :root {
+      --header-height: 100px;
+      --splitter-size: 2px;
+      --bg-main: #f4f6f9;
+      --bg-card: #ffffff;
+      --border-color: #cbd5e1;
+      --splitter-color: #e2e8f0;
+      --splitter-hover: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      height: 100vh;
+      overflow: hidden; /* Prevents main body scrolling */
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-main);
+      color: #334155;
+    }
+
+    /* Fixed Header */
+    header {
+      height: var(--header-height);
+      background-color: #1e293b;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    /* Main Container (Below Header) */
+    .container {
+      height: calc(100vh - var(--header-height));
+      display: flex;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Resizable Panels Base Styling */
+    .panel {
+      background-color: var(--bg-card);
+      padding: 1rem;
+      overflow: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+    }
+
+    /* Left Sidebar Panel */
+    .left-panel {
+      width: 1px; /* Initial width */
+      min-width: 1px;
+      max-width: 60vw;
+      height: 100%;
+    }
+
+    /* Right Container (Houses Top & Bottom Panels) */
+    .right-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 200px;
+    }
+
+    .right-top {
+      height: 50%; /* Initial height ratio */
+      min-height: 100px;
+    }
+
+    .right-bottom {
+      flex: 1; /* Fills remaining height */
+      min-height: 100px;
+    }
+
+    /* Splitters (Resizers) */
+    .gutter {
+      background-color: var(--splitter-color);
+      transition: background-color 0.2s ease;
+      z-index: 5;
+    }
+
+    .gutter:hover, .gutter.dragging {
+      background-color: var(--splitter-hover);
+    }
+
+    /* Vertical Splitter (Left-Right) */
+    .gutter-horizontal {
+      width: var(--splitter-size);
+      cursor: col-resize;
+      height: 100%;
+    }
+
+    /* Horizontal Splitter (Top-Bottom) */
+    .gutter-vertical {
+      height: var(--splitter-size);
+      cursor: row-resize;
+      width: 100%;
+    }
+
+    /* Responsive adjustments for mobile screens */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .left-panel, .right-container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .left-panel {
+        height: 250px;
+      }
+
+      .gutter-horizontal {
+        display: none; /* Disable horizontal drag on mobile */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed Header -->
+  <header>
+    <h1>Dashboard Layout</h1>
+  </header>
+
+  <!-- Main Content Layout -->
+  <div class="container" id="container">
+    
+    <!-- Left Sidebar Panel -->
+    <div class="panel left-panel" id="left-panel">
+      <h2>Left Panel</h2>
+      <p>Drag the vertical handle on the right to resize this pane.</p>
+    </div>
+
+    <!-- Vertical Splitter Handle -->
+    <div class="gutter gutter-horizontal" id="gutter-col"></div>
+
+    <!-- Right Stacked Container -->
+    <div class="right-container" id="right-container">
+      
+      <!-- Right Top Panel -->
+      <div class="panel right-top" id="right-top">
+        <h2>Right Top Panel</h2>
+        <p>Drag the horizontal handle below to resize this pane.</p>
+      </div>
+
+      <!-- Horizontal Splitter Handle -->
+      <div class="gutter gutter-vertical" id="gutter-row"></div>
+
+      <!-- Right Bottom Panel -->
+      <div class="panel right-bottom" id="right-bottom">
+        <h2>Right Bottom Panel</h2>
+        <p>This panel automatically fills the remaining vertical space.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Vertical (Column) Resize Logic ---
+    const leftPanel = document.getElementById('left-panel');
+    const gutterCol = document.getElementById('gutter-col');
+    let isColDragging = false;
+
+    gutterCol.addEventListener('mousedown', (e) => {
+      isColDragging = true;
+      gutterCol.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none'; // Prevent text selection
+    });
+
+    // --- Horizontal (Row) Resize Logic ---
+    const rightTop = document.getElementById('right-top');
+    const rightContainer = document.getElementById('right-container');
+    const gutterRow = document.getElementById('gutter-row');
+    let isRowDragging = false;
+
+    gutterRow.addEventListener('mousedown', (e) => {
+      isRowDragging = true;
+      gutterRow.classList.add('dragging');
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    // --- Shared MouseMove Listener ---
+    document.addEventListener('mousemove', (e) => {
+      if (isColDragging) {
+        // Calculate new width relative to window/container
+        const newWidth = e.clientX;
+        const minWidth = 150;
+        const maxWidth = window.innerWidth * 0.6; // Max 60% of screen
+
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
+          leftPanel.style.width = `${newWidth}px`;
+        }
+      }
+
+      if (isRowDragging) {
+        // Calculate top panel height relative to right-container offset
+        const containerTop = rightContainer.getBoundingClientRect().top;
+        const newHeight = e.clientY - containerTop;
+        const minHeight = 100;
+        const maxHeight = rightContainer.clientHeight - 100;
+
+        if (newHeight >= minHeight && newHeight <= maxHeight) {
+          rightTop.style.height = `${newHeight}px`;
+        }
+      }
+    });
+
+    // --- Shared MouseUp Listener ---
+    document.addEventListener('mouseup', () => {
+      if (isColDragging || isRowDragging) {
+        isColDragging = false;
+        isRowDragging = false;
+        gutterCol.classList.remove('dragging');
+        gutterRow.classList.remove('dragging');
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+      }
+    });
+  </script>
+
+</body>
+</html>
