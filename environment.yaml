@@ -1,0 +1,47 @@
+initialize:
+  - run: |
+      # This is a static web application with no build process required
+      # The app uses ES6 modules with JSON imports, requiring a modern browser
+      # No dependencies or installation steps needed
+
+maintenance:
+  - run: |
+      # No ongoing maintenance needed - static files are ready to serve
+
+knowledge:
+  - name: startup
+    contents: |
+      # Serve the application using a simple HTTP server
+      # Option 1: Python 3
+      python -m http.server 8000
+      
+      # Option 2: Python 2
+      python -m SimpleHTTPServer 8000
+      
+      # Option 3: Node.js (if available)
+      npx http-server -p 8000
+      
+      # Option 4: PHP built-in server
+      php -S localhost:8000
+      
+      # Then open http://localhost:8000 in a browser
+      
+      # Note: The app requires FamilyTree.json and Dictionary.json to be present
+      # These files should be converted from GenoPro .gno and Dictionary.xml files
+
+  - name: data-preparation
+    contents: |
+      # The application requires JSON data files:
+      # 1. FamilyTree.json - Genealogical data from GenoPro .gno file
+      # 2. Dictionary.json - Language dictionary from GenoPro Dictionary.xml
+      # 
+      # These need to be converted from GenoPro format to JSON format
+      # Contact the project maintainer for conversion tools or scripts
+
+  - name: browser-requirements
+    contents: |
+      # Browser requirements:
+      # - Modern browser with ES6 module support
+      # - JSON import support (import with {type:'json'})
+      # - Tested in Chrome, Firefox, Edge, Safari
+      # - No server-side processing required
