@@ -1,4 +1,4 @@
-import { Individuals, Families, Gender_, Name_, Event_, toArray, Dic, DicDate, Enum, List_ } from './index.js';
+import { Individuals, Families, Enum_, Name_, Event_, toArray, Dic, DicDate, Enum, List_ } from './index.js';
 
 export class Individual {
 	#findBaptismEvent(id) {
@@ -18,7 +18,7 @@ export class Individual {
 		this._ID = id;
 		this._real = id !== '-';
 		this._ind = $tree.ind[id] ? $tree.ind[id] : {};
-		this._Gender = new Gender_(this._ind.g || '');
+		this._Gender = new Enum_(this._ind.g || '', 'Gender');
 		this._Name = new Name_(this._ind.n || {}, this.Class, this._Gender);
 		this._Events = { ...this._ind.evt, pri: {}, sec: {} };
 		this._Birth = new Event_(this._Events?.birt?.pri || '', id);
@@ -40,9 +40,9 @@ export class Individual {
 		Object.defineProperty(this._Birth, 'Gestation', { value: this._Birth.Age });
 		this._Death = new Event_(this._Events?.deat?.pri || '', id);
 		this._Family = Families.get('-');
-		this._Fathers = [];
-		this._Mothers = [];
-		this._Families = [];
+		this._Fathers = new List_();
+		this._Mothers = new List_();
+		this._Families = new List_();
 		if (this._ind.ref && this._ind.ref.rel) {
 			let rels = (this._ind.ref.rel instanceof Array ? this._ind.ref.rel : [this._ind.ref.rel])  // convert single ref to array
 			let i=0, rel, type, types = { B:'_Biological', A:'_Adopted', F:'_Fostered'};
@@ -77,11 +77,12 @@ export class Individual {
 	get ID() { return this._ID; };
 	get IsDead() { return this._Death._Extant; };
 	get Link() { return this._real ? `<span class="individual-link" data-id="${this._ID}">${this._Name}</span>` : ''; };
+	get LinkShort() { return this._real ? `<span class="individual-link" data-id="${this._ID}">${this._Name.KnownAs}</span>` : ''; };
 	get Mother() { return this._Family.Wife[0] || this._dummy; };
 	get Mothers() { return this._Mothers; };
 	get Name() { return this._Name; };
 	get Parents() { return [...this._Fathers, ...this._Mothers]; };
-	get ToBe() { 
+	get IsOrWas() { 
 		const root = 'ToBe'+(this._Death._Extant ? '_Past' : '_Present')
 		const tentative = Dic(root, {peek: true, gender: this._Gender.ID}); 
 		return tentative ? tentative : Dic(root);

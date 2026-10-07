@@ -12,8 +12,10 @@ export function addNarrative(text,options={}) {
 		document.querySelector(panels[options.panel||'Detail']).innerHTML = '';
 	}
   if (text) {
-	const leading = options.eol ? '' : ' ';
-	text = text.replace(/$\0/, leading);	// \0 is token for leading space, keep space if eol is false
+	let toUppertoken = text.indexOf('\x01')
+	if (toUppertoken > -1) text = text.slice(0,toUppertoken) + text.charAt(toUppertoken+1).toUpperCase() + text.slice(toUppertoken+2);
+	const leading = options.eol ? '' : '&#32;';
+	text = text.replace(/\x00/g, leading);	// \x00 is token for leading space, keep space if eol is false
     document.querySelector(panels[options.panel||'Detail']).insertAdjacentHTML('beforeend',text);
 	return text.endsWith('<br/>');
   } else {
@@ -26,23 +28,56 @@ export function addNarrative(text,options={}) {
  * @param {Object} options - Configuration options
  * @param {string} options.attr - The attribute to retrieve (default: 'T')
  * @param {string} options.group - The dictionary group (default: 'ReportGenerator' or empty if key contains '.')
+ * @param {string} options.tense - Optional tense qualifier to append to the key (e.g., 'Past', 'Present')
+ * @param {string} options.gender - Optional gender qualifier to append to the key (e.g., 'M', 'F')
+ * @param {string} options.count - Optional count to determine plural form (e.g., 2 for plural) 
+ * @param {string} options.cardinal - Optional count to determine plural form (e.g., 2 for plural) 
+ * 									and used to select the appropriate attribute ('T' for singular, 'P' for plural)
+ * 									result either obtained via the C'n' attribute of the Dictionary entry or 
+ * 									is formatted using the cardinal format of this integer together with
+ * 									the result using template FmtPlurialCardinal from Dictionary.json
  * @param {boolean} options.peek - If true, suppresses console log for missing keys
  * @param {string} options.multi - If provided, replaces $$ in result with this value
  * @returns {string} The dictionary value or empty string if not found
  */
 export function Dic(key, options = {}) {
   if (!key) return '';
-  const attr = options.attr || 'T';
-  const group = options.group || (key.includes('.') ? '' : 'ReportGenerator');
-  const tag = options.gender ? key + '.' + options.gender : key;
-  const path = (group ? group + '.' : '') + tag + '.' + attr;
+  if (Object.hasOwn(options, 'cardinal') && options.cardinal == 0) {
+	return '';
+  }
   const getDic = (obj, path) => path.split(".").reduce((o, k) => o && o[k], obj);
-  const result = getDic($dictionary, path);
+  const attr = options.attr || 
+    (options.cardinal && options.cardinal > 1) || 
+    (options.count && options.count > 1) ? 'P' : 'T';
+  const group = options.group || (key.includes('.') ? '' : 'ReportGenerator');
+  let tag = options.tense ? key + '_' + options.tense : key;
+  tag = Object.hasOwn(options,'gender') ? tag + '_' + options.gender : tag;
+  let path = (group ? group + '.' : '') + tag + '.' + attr;
+  let result = getDic($dictionary, path);
+
+  if (result === undefined && attr === 'P') {
+	path = path.replace(/.P$/, '.T');
+    result = getDic($dictionary, path);
+	if (result !== undefined) {
+		result += 's';
+	}
+  }
+  if (result === undefined && Object.hasOwn(options,'gender')) {
+	path = path.replace(key + '_' + options.gender, key);
+	result = getDic($dictionary, path);
+  }
  if (result === undefined) {
     if (!options.peek) console.log('not found', key, group, options);
     return '';
   }
-  return options.multi ? result.replace(/\$\$/g, options.multi) : result;
+  if (options.multi) {
+    result = result.replace(/\$\$/g, options.multi);
+  }
+  if (options.cardinal) {
+	let tmp = getDic($dictionary, path.replace(/.(T|P)$/, '.C' + options.cardinal));
+    result = tmp ? tmp : FormatString("FmtPlurialCardinal", Dic("Cardinal_" + options.cardinal), result);
+  }
+  return result;
 }
 /**
  * Retrieves a date value from the dictionary
@@ -98,6 +133,18 @@ export function DicDate(key, shortform = false) {
  */
 export function Enum(key,type) {
 	return Dic(key+'.'+type,{group:'Enumerations'});
+}
+/**
+ * Formats a string with placeholders e.g. {1} using the FormatString function
+ * @param {string} format - The format string with placeholders
+ * @param {...*} args - The arguments to replace placeholders
+ * @returns {string} The formatted string
+ */
+export function FormatString(format, ...args) {
+	return Dic(format).replace(/{(\d+)}/g, function (match, number) {
+    	return typeof args[number] !== 'undefined' ? args[number] : match;
+  });
+
 }
 /**
  * Gets or creates an Individual instance for the given ID

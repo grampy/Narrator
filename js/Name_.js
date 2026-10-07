@@ -1,4 +1,4 @@
-import { Dic, Enum } from './utils.js';
+import { Dic, Enum } from './index.js';
 
 export class Name_ {
 	constructor(n, Class, gender) {
@@ -8,7 +8,10 @@ export class Name_ {
 			? n.find(name => name.k === 'b') || n[0]
 			: n;
 		if (this.Class === 'Individual') {
-			this._namesLast = Array.isArray(this._name.l) ? this._name.l.join('|') : this._name.l || '';
+			this._namesLast = Array.isArray(this._name.l) ? 
+			(this._name.l[1] ? this._name.l[0] + ' (' + this._name.l.splice(1).join(', ') + ')' :
+			 this._name.l[0] ):
+			 this._name.l || '';
 			this._knownAs = this._name.c ? this._name.c : Array.isArray(this._name.f) ? this._name.f[0] : this._name.f || '';
 			this._firstMiddle = Array.isArray(this._name.f) ? this._name.f.join(' ') : this._name.f || '';
 		} else {
@@ -22,8 +25,8 @@ export class Name_ {
 	get FirstMiddle() { return this._firstMiddle; }
 	get First() { return this._knownAs; }
 	get KnownAs() { return this._knownAs; }
-		get Last() { return Array.isArray(this._name.l) ? this._name.l[0] : this._name.l || ''; }
-		get Prefix() { return this._name.p || ''; }
+	get Last() { return Array.isArray(this._name.l) ? this._name.l[0] : this._name.l || ''; }
+	get Prefix() { return this._name.p || ''; }
 	get Title() { return this._name.p || ''; }
 	get Suffix() { return this._name.s || ''; }
 	get Nick() { return this._name.c || ''; }

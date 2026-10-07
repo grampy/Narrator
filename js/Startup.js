@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded",function(){
         if (rel.k) {
 			if (rel.k == 'B') {
 				Individuals.get(`${rel.ind}`).Family = Families.get(`${rel.fam}`);
+				Families.get(`${rel.fam}`).Children.add(Individuals.get(`${rel.ind}`));
 			} else if (rel.k == 'M') {
 				// TODO: Handle multiple birth relationships
 			}
@@ -31,9 +32,9 @@ document.addEventListener("DOMContentLoaded",function(){
 			console.log(`Adding family ${rel.fam} to individual ${rel.ind}`);
 			Individuals.get(`${rel.ind}`).Families.push( Families.get(`${rel.fam}`));
             if (Individuals.get(`${rel.ind}`).Gender.ID === 'M') {
-                Families.get(`${rel.fam}`).Husband.push(Individuals.get(`${rel.ind}`));
+                Families.get(`${rel.fam}`).Husband.add(Individuals.get(`${rel.ind}`));
             } else {
-                Families.get(`${rel.fam}`).Wife.push(Individuals.get(`${rel.ind}`));
+                Families.get(`${rel.fam}`).Wife.add(Individuals.get(`${rel.ind}`));
             }
         }
 	}

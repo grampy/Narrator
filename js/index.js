@@ -3,7 +3,7 @@ export * from './utils.js';
 export * from './Date_.js';
 export * from './Duration_.js';
 export * from './Event_.js';
-export * from './Gender_.js';
+export * from './Enum_.js';
 export * from './Individual.js';
 export * from './Family.js';
 export * from './Name_.js';

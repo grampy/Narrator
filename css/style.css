@@ -73,12 +73,13 @@ header {
 }
 
 .right-top {
-  height: 50%; /* Initial height ratio */
+  height: 100%; /* Initial height ratio */
   min-height: 100px;
 }
 
 .right-bottom {
   flex: 1; /* Fills remaining height */
+  display: none;
   min-height: 100px;
 }
 
@@ -248,7 +249,10 @@ header {
         font-size: 12px;
         margin-left: 8px;
     }
-    
+    .individual-link {
+      cursor: pointer;
+      text-decoration: underline;
+    }
     .letter-header.collapsed + .key-group,
     .last-name-header.collapsed + .individual-list,
     .collapsed + .key-group,

@@ -11,11 +11,15 @@ export const Parser = {
 	 */
 	Phrase(phrase, args) {
 		this.args = args;
-		this.pattern = /\{(\??\!?)(\@[^\}]+|\d+)(h|\^|\&|\||\!?\=?)([^\}]*)\}/g;
-		this.previous = false;
-		this.subphrase = true;
-		this.eol = false;
-		this.else = false;
+		this.pattern = /\{(\??\!?)(\@[^\}]+|\d+|)(h|\^|\&|\||\!?\=?)([^\}]*)\}/g;
+		this.flags = {};
+		this.valid = false;
+		this.flags.previous = false;
+		this.validSubphrase = [false];
+		this.flags.eol = false;
+	
+		this.flags.diag = true;
+		if (this.flags.diag) console.log(args, this.flags);
 		
 		// Initialise phrase for ready for processing by adding level numbers to delimiters
 		//  to reflect nested depth so [ and ] become [n and n]  e.g. [1 and 1]
@@ -24,7 +28,7 @@ export const Parser = {
 		phrase = phrase.replace(/([\[\]])/g, m => (m === '[' ? `[${++depth}` : `${depth--}]`));
 		// Nested will recursively call itself to deal with all subphrases
 		let result = this.Nested('', 0, phrase);
-		result = this.toUpper ? result.charAt(0).toUpperCase() + result.slice(1) : result;
+		result = this.flags.toUpper ? result.charAt(0).toUpperCase() + result.slice(1) : result;
 		return result;
 	},
 
@@ -41,56 +45,44 @@ export const Parser = {
 	 */
 	Nested($0, $1, txt) {
 		const originalTxt = txt;
-	console.log('N level '+$1+' entry:'+txt);
+		if (this.flags.diag) console.log('N level '+$1+' entry:'+txt);
 		txt = txt.replace(/\[(\d+)((.|\n)*?)\1\]/gim, this.Nested.bind(this));
 		//                 \_____/  \______/\__/
 		//                    |        |      |
 		// Above we have: delimiter, subphrase, delimiter at same level as 1st (back reference \1)
 		// So Nested is recursively called.
 
-		// Check if inner phrases were processed (text changed)
-		//**const innerPhrasesProcessed = txt !== originalTxt;
-
-		// Extract static text (text without the bracket markers) from original
-		//**const staticText = originalTxt.replace(/\[\d+.*?\d+\]/g, '');
-		// Check if result is just the static text (inner phrases didn't add content)
-		//**const resultIsJustStaticText = txt.trim() === staticText.trim();
-
-		// Deal with special arguments {\U} , {\n}, {\r}, {!} & { }
-		this.else = false;
-		txt = txt.replace(/\{( |\\U| +|\!|\\r|\\n)\}/g, (match, p1) => {
+		// Deal with special arguments {\U} , {\n}, {\r} & { }
+		txt = txt.replace(/\{( |\\U| +|\\r|\\n)\}/g, (match, p1) => {
 			switch (p1.trim()) {
 				case '\\U': 	return '\x01';	// uppercase flag
 				case '\\r':
 				case '\\n': return '<br>';
-				case '\!' : this.ignore = this.previous; this.else=true; return ''; // 'else' condition follows
 				default   : return p1.replace(/ /g, '\x00'); // replace one or more spaces with flag (null byte)
 			}
 		});
-
-		this.validTokens = false;
-		this.ignore = false; 
-		this.tokens = false;
-		
-		console.log('1.'+txt+' ignore:'+this.ignore+' valid:'+this.validTokens+' tokens:'+this.tokens+' subphrase:'+this.subphrase+' else:'+this.else);
-
+		let level = parseInt($1);
+		if (this.validSubphrase.length < level) this.validSubphrase.push(false);
+		this.flags.validTokens = false;
+		this.flags.conditional = ''; 
+		this.flags.tokens = false;
+		this.validSubphrase[level] = this.validSubphrase[level] || false;
+		if (this.flags.diag) console.log('1. ' + txt,this.flags, this.validSubphrase[level]);
+		// call SubPhrase for each {token} in txt
 		txt = txt.replace(this.pattern, this.SubPhrase.bind(this));
 
-		console.log('2.'+txt+' ignore:'+this.ignore+' valid:'+this.validTokens+' tokens:'+this.tokens+' subphrase:'+this.subphrase+' else:'+this.else);
-
 		// Check if the result should be empty:
-		// 1. If we should ignore this phrase, OR
-		// 2. If we have no valid content AND either we had tokens OR 
-		//    inner phrases were processed but result is just static text (no meaningful content added)
-		//if (this.ignore || (!this.validTokens && (this.tokens || (innerPhrasesProcessed && resultIsJustStaticText)))) {
-		if (!this.ignore && ($1==0 || this.else) ||!this.ignore && this.subphrase || this.tokens && this.validTokens) {
+		if (this.flags.conditional != 'false' && this.validSubphrase[level] && !this.flags.tokens||
+			this.flags.conditional === 'true' && !this.flags.tokens||
+			 this.flags.conditional != 'false' && this.flags.tokens && this.flags.validTokens) {
 			this.previous = true;
-			console.log('N level '+$1+' exit:'+txt);
-			this.subphrase = true;
+			this.valid = true;
+			if (this.flags.diag) console.log('N level '+$1+' exit:'+txt, this.flags, this.validSubphrase[level]||'!!');
+			this.validSubphrase[level-1] = true;
 			return txt;
 		} else {
 			this.previous = false;
-		console.log('N level '+$1+' exit: empty');
+			if (this.flags.diag) console.log('N level '+$1+' exit: empty (txt='+txt+')', this.flags);
 			return '';
 		}
 	},
@@ -145,7 +137,7 @@ export const Parser = {
 			'"': '&quot;',
 			'\t': '&nbsp;&nbsp;&nbsp;&nbsp;'
 		};
-		return !value ? '' :
+		return typeof value != 'string' ? '' :
 			value.replace(/[\&\<\>\\\"\t]/g, c => entityMap[c])
 			.replace(/\s{2,}/g, m => m.slice(0, 1) + m.slice(1).replace(/./g, '&nbsp;'));
 	},
@@ -157,7 +149,7 @@ export const Parser = {
 	 * @param {bool} html - if true escape HTML special characters
 	 * @returns {string|boolean} evaluated value or false if undefined
 	 */
-	Eval(arg, html) {
+	Eval(arg, html=false) {
 		if (arg.startsWith('@')) {
 			try {
 				return eval(arg.slice(1));
@@ -181,9 +173,12 @@ export const Parser = {
 	 * @returns {string} replacement text
 	 */
 	SubPhrase(match, p1, p2, p3, p4) {
-		this.ignore = false;
+		if (match === '{!}') { // 'else' token so check previous conditional
+			this.flags.conditional = this.flags.previous ? 'false' : 'true';
+			return '';
+		}
 		if (p1.slice(0, 1) === '?') { // Check Conditional Sub-Phrase {?0} or multiple e.g. {?0|1|2}, {?0&1&2}
-			this.ignore = !this.Conditional(p1, p2, p3, p4);
+			this.flags.conditional = this.Conditional(p1, p2, p3, p4) ? 'true' : 'false';
 		      return '';
 		}
 
@@ -191,15 +186,17 @@ export const Parser = {
 
 		const valueOrDefault = (ghost = false) => {
 			const value = p2Eval ? p2Eval : (p3 === '=' || p3 === '!=') ? p4 : '';
-			if ((p2Eval && !ghost) || (!ghost && p3 !== '!=' && value)) this.validTokens = true;
+			if ((p2Eval && !ghost) || (!ghost && p3 !== '!=' && value)) this.flags.validTokens = true;
 			return value;
 		};
 
 		if (p1  == '') {
-			this.tokens = true;
+			this.flags.tokens = true;
+			console.log('match: ' + match+ ' returns tokens: true and value: ' + valueOrDefault());
 			return valueOrDefault();
 		}
 
+		console.log('match: ' + match+ ' returns value: ' + valueOrDefault());
 		return valueOrDefault(p1 === '!');
 	}
 };
