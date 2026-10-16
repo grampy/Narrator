@@ -10,7 +10,21 @@
 <body>
   <!-- Fixed Header -->
   <header>
+    <button class="hamburger-menu" id="hamburgerMenu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
     <h1>Family History</h1>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <a href="#" data-type="Individuals">Individuals</a>
+      <a href="#" data-type="Families">Families</a>
+      <a href="#" data-type="Places">Places</a>
+      <a href="#" data-type="Maps">Maps</a>
+      <a href="#" data-type="FamilyTrees">Family Trees</a>
+      <a href="#" data-type="Pictures">Pictures</a>
+      <a href="#" data-type="Sources">Sources</a>
+    </div>
   </header>
 
   <!-- Main Content Layout -->
@@ -24,18 +38,18 @@
             Loading statistics...
           </span>
         </div>
-        <div class="tree-control">
-          <span>&#128712;</span>
-          <button class="tooltip">
-            <strong>Instructions:</strong><br/>Click on letter headers or name group headers to expand/collapse sections.<br/>Click on individual names to see details.
-          </button>
-        </div>
         <div class="tree-controls" style="float:right;  font-size: 1.5em;">
+          <button class="tree-control">&#128712;
+            <span class="tooltip">Instructions:<br/>Click on letter headers or name group headers to expand/collapse sections.<br/>Click on individual names to see details.</span>
+          </button>
          <button id="expandAllBtn" class="tree-control">&oplus;
-          <span class="tooltip">Expand All</span>
+          <span class="tooltip">Expand All</span> 
          </button>
         <button id="collapseAllBtn" class="tree-control">&ominus;
           <span class="tooltip">Collapse All</span>
+        </button>
+        <button id="hideIndexBtn" class="tree-control">X
+          <span class="tooltip">Hide Index</span>
         </button>
        </div>
       </div>

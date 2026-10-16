@@ -4,6 +4,7 @@ export class Date_ {
 	constructor(date = {}) {
 		this._calendar = Object.keys(date)[0] || '';
 		this._date = date[this._calendar] || '';
+		this.Approximation = /^[<>~]/.test(this._date) ? this._date[0] : '';
 	}
 
 	_format(format) {

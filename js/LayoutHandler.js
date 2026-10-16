@@ -1,6 +1,12 @@
+
+import { Trees, renderTree } from './index.js';
+
 export function handleLayout() {
     // --- Vertical (Column) Resize Logic ---
     const leftPanel = document.getElementById('left-panel');
+
+    leftPanel.style.display = 'none';  // Hide left panel by default
+    
     const gutterCol = document.getElementById('gutter-col');
     let isColDragging = false;
     globalThis.isColDragging = isColDragging;
@@ -62,4 +68,63 @@ export function handleLayout() {
         document.body.style.userSelect = 'auto';
       }
     });
+
+    // Setup expand/collapse all buttons (only once)
+    const expandAllBtn = document.getElementById('expandAllBtn');
+    const collapseAllBtn = document.getElementById('collapseAllBtn');
+    
+    const hideIndexBtn = document.getElementById('hideIndexBtn');
+
+    expandAllBtn.onclick = () => {
+      document.querySelectorAll('.letter-header').forEach(header => {
+        header.classList.remove('collapsed');
+      });
+      document.querySelectorAll('.last-name-header').forEach(header => {
+        header.classList.remove('collapsed');
+      });
+    };
+
+    collapseAllBtn.onclick = () => {
+      document.querySelectorAll('.letter-header').forEach(header => {
+        header.classList.add('collapsed');
+      });
+      document.querySelectorAll('.last-name-header').forEach(header => {
+        header.classList.add('collapsed');
+      });
+    };
+    
+    hideIndexBtn.onclick = () => {
+      document.getElementById('left-panel').style.display = 'none';
+    };
+
+    // Hamburger menu toggle
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    hamburgerMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!dropdownMenu.contains(e.target) && !hamburgerMenu.contains(e.target)) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    // Handle menu item clicks
+    dropdownMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const type = link.getAttribute('data-type');
+        dropdownMenu.classList.remove('show');
+        document.getElementById('left-panel').style.display = 'block';
+
+        // Render appropriate index based on type
+        Trees[type] ? renderTree(Trees[type], '', type) : 
+        alert(`Index for '${type}' coming soon!`);
+      });
+    });
+
 }

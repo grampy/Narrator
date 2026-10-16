@@ -2782,7 +2782,7 @@
                 "T": "{0} is no longer alive."
             },
             "PhDied": {
-                "T": "{  }{\\U}{!0} died[ {6}[[{?6},\n][{?!6} due to] {7h}[{?6},\n]]][{?!8}[ at the age of {1}][{?!1}[ at {2} months old][{?!2} at just {3} days old]]]{4}{5h}."
+                "T": "{  }{\\U}{!0} died[ {6}[[{?6},][{?!6} due to] {7h}[{?6},]]][{?!8}[ at the age of {1}][{?!1}[ at {2} months old][{?!2} at just {3} days old]]]{4}{5h}."
             },
             "PhDiedTxt": {
                 "T": "[[{?!9}{!0}][{!} {!9}] died{4}{5}.][{?9}[{?!4|5}{4=.}]]",

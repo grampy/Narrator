@@ -12,14 +12,9 @@ export const Parser = {
 	Phrase(phrase, args) {
 		this.args = args;
 		this.pattern = /\{(\??\!?)(\@[^\}]+|\d+|)(h|\^|\&|\||\!?\=?)([^\}]*)\}/g;
-		this.flags = {};
+		this.flags = {eol: false, previous: false, diag:true};
 		this.valid = false;
-		this.flags.previous = false;
 		this.validSubphrase = [false];
-		this.flags.eol = false;
-	
-		this.flags.diag = true;
-		if (this.flags.diag) console.log(args, this.flags);
 		
 		// Initialise phrase for ready for processing by adding level numbers to delimiters
 		//  to reflect nested depth so [ and ] become [n and n]  e.g. [1 and 1]
@@ -29,6 +24,9 @@ export const Parser = {
 		// Nested will recursively call itself to deal with all subphrases
 		let result = this.Nested('', 0, phrase);
 		result = this.flags.toUpper ? result.charAt(0).toUpperCase() + result.slice(1) : result;
+	
+		if (this.flags.diag) console.log(phrase, args, result);
+
 		return result;
 	},
 
@@ -45,7 +43,6 @@ export const Parser = {
 	 */
 	Nested($0, $1, txt) {
 		const originalTxt = txt;
-		if (this.flags.diag) console.log('N level '+$1+' entry:'+txt);
 		txt = txt.replace(/\[(\d+)((.|\n)*?)\1\]/gim, this.Nested.bind(this));
 		//                 \_____/  \______/\__/
 		//                    |        |      |
@@ -62,27 +59,31 @@ export const Parser = {
 			}
 		});
 		let level = parseInt($1);
-		if (this.validSubphrase.length < level) this.validSubphrase.push(false);
+		while (this.validSubphrase.length <= level) {
+			this.validSubphrase.push(false);
+		}
 		this.flags.validTokens = false;
-		this.flags.conditional = ''; 
+		this.flags.conditional = '-'; 
 		this.flags.tokens = false;
-		this.validSubphrase[level] = this.validSubphrase[level] || false;
-		if (this.flags.diag) console.log('1. ' + txt,this.flags, this.validSubphrase[level]);
-		// call SubPhrase for each {token} in txt
-		txt = txt.replace(this.pattern, this.SubPhrase.bind(this));
+		//this.validSubphrase[level] = this.validSubphrase[level] || false;
+		if (this.flags.diag) console.log('level ' + level + ': entry' + txt,this.flags.conditional, this.flags.tokens, this.flags.validTokens, this.validSubphrase[level]);
+
+		txt = txt.replace(this.pattern, this.SubPhrase.bind(this)); // call SubPhrase for each {token} in txt
 
 		// Check if the result should be empty:
-		if (this.flags.conditional != 'false' && this.validSubphrase[level] && !this.flags.tokens||
-			this.flags.conditional === 'true' && !this.flags.tokens||
-			 this.flags.conditional != 'false' && this.flags.tokens && this.flags.validTokens) {
+		if (this.flags.conditional != 'N' && this.validSubphrase[level] && !this.flags.tokens||
+			this.flags.conditional === 'Y' && !this.flags.tokens||
+			 this.flags.conditional != 'N' && this.flags.tokens && this.flags.validTokens) {
 			this.previous = true;
-			this.valid = true;
-			if (this.flags.diag) console.log('N level '+$1+' exit:'+txt, this.flags, this.validSubphrase[level]||'!!');
-			this.validSubphrase[level-1] = true;
+			
+			if (this.flags.diag) console.log('level ' + level + ': exit' + txt,this.flags.conditional, this.flags.tokens, this.flags.validTokens, this.validSubphrase[level]);
+			this.validSubphrase[level-1] = true;console.log('set validSubphrase[' + (level-1) + '] to true');
+			this.validSubphrase[level] = false;console.log('set validSubphrase[' + level + '] to false');
 			return txt;
 		} else {
 			this.previous = false;
-			if (this.flags.diag) console.log('N level '+$1+' exit: empty (txt='+txt+')', this.flags);
+			//this.validSubphrase[level-1] = false;console.log('set validSubphrase[' + (level-1) + '] to false');
+			if (this.flags.diag) console.log('level ' + level + ': exit empty (' + txt + ')',this.flags.conditional, this.flags.tokens, this.flags.validTokens, this.validSubphrase[level]);
 			return '';
 		}
 	},
@@ -174,29 +175,20 @@ export const Parser = {
 	 */
 	SubPhrase(match, p1, p2, p3, p4) {
 		if (match === '{!}') { // 'else' token so check previous conditional
-			this.flags.conditional = this.flags.previous ? 'false' : 'true';
+			this.flags.conditional = this.flags.previous ? 'N' : 'Y';
 			return '';
 		}
 		if (p1.slice(0, 1) === '?') { // Check Conditional Sub-Phrase {?0} or multiple e.g. {?0|1|2}, {?0&1&2}
-			this.flags.conditional = this.Conditional(p1, p2, p3, p4) ? 'true' : 'false';
+			this.flags.conditional = this.Conditional(p1, p2, p3, p4) ? 'Y' : 'N';
 		      return '';
 		}
+		let value = this.Eval(p2, p3 == 'h');
 
-		const p2Eval = this.Eval(p2, p3 == 'h');
-
-		const valueOrDefault = (ghost = false) => {
-			const value = p2Eval ? p2Eval : (p3 === '=' || p3 === '!=') ? p4 : '';
-			if ((p2Eval && !ghost) || (!ghost && p3 !== '!=' && value)) this.flags.validTokens = true;
-			return value;
-		};
-
-		if (p1  == '') {
-			this.flags.tokens = true;
-			console.log('match: ' + match+ ' returns tokens: true and value: ' + valueOrDefault());
-			return valueOrDefault();
-		}
-
-		console.log('match: ' + match+ ' returns value: ' + valueOrDefault());
-		return valueOrDefault(p1 === '!');
+		let result = value != '' ? value : (p3 === '=' || p3 === '!=') ? p4 : '';
+	
+		const ghost = (p1 === '!') || (!value && p3 === '!=');
+		this.flags.tokens = !ghost;
+		this.flags.validTokens = (value != '' && !ghost);
+	return result;
 	}
 };

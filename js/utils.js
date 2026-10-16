@@ -228,17 +228,8 @@ export function highlightText(text, filterText) {
 		const regex = new RegExp(`(${filterText})`, 'gi');
 	return text.replace(regex, '<span class="highlight">$1</span>');
 }
-export function setupSearch(treeIndex) {
-	const searchBox = document.getElementById('searchBox');
-	let debounceTimer;
-	
-	searchBox.addEventListener('input', (e) => {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			const filterText = e.target.value.trim();
-			renderTree(treeIndex, filterText);
-		}, 300);
-	});
+export function parseText(obj, text) {
+	return text.replace(/\$/g, '');
 }
        
 export function renderTree(treeIndex, filterText = '', title) {
@@ -305,15 +296,14 @@ export function renderTree(treeIndex, filterText = '', title) {
 				listItem.className = 'list-item';
 				
 				const displayName = filterText 
-					? highlightText(item.entry, filterText)
+					? item.entry.replace(new RegExp(`(${filterText})`, 'gi'),'<span class="highlight">$1</span>')
 					: item.entry;
 				
 				listItem.innerHTML = `
-					<span class="item-name">${item.key}, ${displayName}</span>
+					<span class="item-name">${displayName}</span>
 				`;
 				
 				listItem.onclick = () => {
-					console.log('Selected item:', item);
 					WriteIndividual(item.id);
 				};
 				
@@ -329,6 +319,16 @@ export function renderTree(treeIndex, filterText = '', title) {
 		letterDiv.appendChild(keyContainer);
 		container.appendChild(letterDiv);
 	}
+	// set up search
+	const searchBox = document.getElementById('searchBox');
+	let debounceTimer;
+	searchBox.addEventListener('input', (e) => {
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			const filterText = e.target.value.trim();
+			renderTree(treeIndex, filterText);
+		}, 300);
+	});
 	// Calculate and display statistics
 	const totalItems = Object.values(treeIndex).reduce((sum, letterGroup) => {
 		return sum + (Object.values(letterGroup).reduce((subSum, items) => subSum + items.length, 0));

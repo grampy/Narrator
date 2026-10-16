@@ -1,9 +1,9 @@
 
-import { addNarrative, Dic, FormatString, Individuals, Parser } from './index.js';
+import { addNarrative, parseText, Dic, FormatString, Individuals, Parser } from './index.js';
 
 export function WriteIndividual(id) {
     const i = Individuals.get(id);
- 
+    console.log('WriteIndividual', i);
     // gender & name
     addNarrative(`<h2>
             <span class="${i.Gender.ID == 'M' ? 'sexM">&male; ' : i.Gender.ID == 'F' ? 'sexF">&female; ' : 'sexU">? '}
@@ -22,9 +22,9 @@ export function WriteIndividual(id) {
         /*5*/bco.Name.Title, 
         /*6*/bco.Name.toString(), 
         /*7*/b.Place.ID == bc.Place.ID,
-        /*8*/b.Assistant.Name.toString(), 
-        /*9*/b.Gestation.Months, 
-        /*10*/b.Gestation.Weeks,
+        /*8*/b.Assistant?.Name?.toString() || '',   // T.B.C. - needs improving
+        /*9*/b.Gestation?.Months || '',             // T.B.C. - needs improving
+        /*10*/b.Gestation?.Weeks || '',             // T.B.C. - needs improving
         /*11*/i.Pronoun('R'), 
         /*12*/bc.Type, 
         /*13*/i.Name.Possessive,
@@ -56,12 +56,12 @@ export function WriteIndividual(id) {
 		addNarrative(Parser.Phrase(Dic("PhGrandParents"), [
 		// <PhGrandParents T="{ &#32;}{\U}{!0}[[{?3|5} paternal][{?1} grandparents {!1}][{?3}[{?!1} grandfather {!2}] {3h}][{?3^5} and][[{?5}[{?!1}[{?3} {!0} paternal] grandmother {!4}] {5h}]]][[{?3|5}[{?8|10}; {!0}]][[{?8|10} maternal][{?6} grandparents {!6}][{?8}[{?!6} grandfather {!7}] {8h}][[{?8^10} and][{?10}[{?!6}[{?8} {!0} maternal] grandmother {!9}] {10h}]]]]."/>
         /*0*/i.Pronoun('R'),
-        /*1*/i.Father.Family.Parents.AreDead || i.Father.Family.Parents.AreAlive ? i.Father.Family.Parents.IsOrWas : '',
+        /*1*/i.Father.Family.Parents.AreDead || i.Father.Family.Parents.AreAlive ? i.Father.Family.Parents.AreOrWere : '',
         /*2*/i.Mother.Mother.IsOrWas,
         /*3*/i.Father.Father.Link,
         /*4*/i.Mother.Father.IsOrWas,
         /*5*/i.Father.Mother.Link,
-        /*6*/(i.Mother.Family.Parents.AreDead || i.Mother.Family.Parents.AreAlive) ? i.Mother.Family.Parents.IsOrWas : '',
+        /*6*/(i.Mother.Family.Parents.AreDead || i.Mother.Family.Parents.AreAlive) ? i.Mother.Family.Parents.AreOrWere : '',
         /*7*/i.Father.Mother.IsOrWas,
         /*8*/i.Mother.Father.Link,
         /*9*/i.Father.Father.IsOrWas,
@@ -136,140 +136,46 @@ export function WriteIndividual(id) {
             /*8*/Dic("Cardinal"+ children$,{gender: sisters$ == children$ ? 'F' : '',attr: 'TE'})
         ]));
     }
-/*
-	Set oRepertoryTwins = Session("oRepertoryTwins")
-	Set oRepertoryNonBio = Session("oRepertoryNonBio")
-	Set collSiblings = Util.NewGenoCollection
-	Set collOtherSiblings = Util.NewGenoCollection
-	Set collHalfSiblings = Util.NewGenoCollection
-	Set f = i.Family
-	For Each iSibling In i.Siblings.ToGenoCollection
-		If f.ID = iSibling.Family.ID Or oRepertoryNonBio.KeyCounter("I"&iSibling.ID) = 0 Then
-			collSiblings.Add iSibling
-		Else
-			collOtherSiblings.Add iSibling
-		End If
-	Next
-	collHalfSiblings.Add i.Siblings.Half.ToGenoCollection
-	Set collOtherSiblings = i.Siblings.other.ToGenoCollection
-	cSiblings = i.Siblings.ToGenoCollection.Count
-	If (cSiblings = 0) Then
-		If (Not Util.IsNothing(i.Family)) Then
-			If collHalfSiblings.Count > 0 Then
-				WriteNarrativeMFU i, collHalfSiblings, "SiblingHalf"
-			Else
-				If f.FamilyLine.ID ="NoMoreChildren" Then Report.WritePhrase StrDicMFU("PhOnlyChild",strGender), PnP(i), ToBe(i), strGender
-			End If
-		End If
-		WriteNarrativeAdoption i
-		Exit Sub
-	End If
-	Dim strChildRank, strChildRank1, nChildRank, cChildren, fOrdinal
-	cChildren = cSiblings + 1
-	nChildRank = i.FamilyRank
-	strChildRank1 = ""
-	If (nChildRank <= 1) Then
-		If cChildren = 2 Then
-			strChildRank = StrDicPluralCardinalMFU("Oldest", cChildren, strGender)
-		Else
-			strChildRank = Dic.Plurial(GetDicMFU("Oldest", strGender), cChildren)
-		End If
-	ElseIf (nChildRank = cChildren) Then
-		If cChildren = 2 Then
-			strChildRank = StrDicPluralCardinalMFU("Youngest", cChildren, strGender)
-		Else
-			strChildRank = Dic.Plurial(GetDicMFU("Youngest", strGender), cChildren)
-		End If
+    /*
+    	If (i.IsDead) Then
+		Set c = d.Cause
+		ich = Report.BufferLength
+		Report.WritePhrase StrDicMFU("PhDied",strGender), strPnP, i.Death.Age.Years, i.Death.Age.Months, i.Death.Age.Days, CDS(d.Date), d.Place.Session("HlinkLocative"), c, StrFormatText(i, c.Description, False), CustomDate(i.Birth.Date).Approximation & CustomDate(i.Death.Date).Approximation, "", strGender
+			Report.WritePhrase StrDicMFU("PhFuneral",strGender), CDS(f.Date), f.Place.Session("HlinkLocative"), StrFormatText(i, f.Agency, False)
+	If (Dic.Peek("PhBurial" & "_" & d.Disposition.Type.ID) <> "") Or (Dic.Peek("PhBurial" & "_" & d.Disposition.Type.ID & "_" & strGender) <> "") Then
+		strPhrase = StrDicMFU("PhBurial" & "_" & d.Disposition.Type.ID, strGender)
 	Else
-		If nChildRank - 1 < cChildren / 2 Then
-			strChildRank = StrDicAttribute2(GetDicMFU("_Ordinal_" & nChildRank, strGender), "T1", "T")
-			strChildRank1 = Dic("Oldest")
-		Else
-			strChildRank = StrDicAttribute2(GetDicMFU("_Ordinal_" & (cChildren - nChildRank + 1), strGender), "T1", "T")
-			strChildRank1 = Dic("Youngest")
-		End If
-		fOrdinal = True
+		strPhrase = StrDicMFU("PhBurial",strGender)
 	End If
-	strPrefix = Pnp(i)
-	If Util.IsNothing(i.Family) Then ' individual is adopted or fostered but birth parent(s) not present
-		Dim oRepertoryNonBio
-		If oRepertoryNonBio.KeyCounter("I" & i.ID) > 0 Then
-			Set oLink = oRepertoryNonBio.Entry("I" & i.ID).Object(0)
-			strPrefix = Util.FormatPhrase(StrDicExt("PhPL_" & oLink.PedigreeLink.ID & "3", "PhPL_" & LCase(oLink.PedigreeLink.ID) & "3", "", "", "2.0.1.6"),PnR(i), PnP(i), strGender)
-			Set f = oLink.Family
-		End If
+	Report.WritePhrase strPhrase , strPnR, d.Disposition.Type, CDS(d.Disposition.Date), d.Disposition.Place.Session("HlinkLocative"), strPnP, d.Disposition.Type.ID, strGender
+		If (ich = Report.BufferLength) And (Not i.Father.IsDead = True Or Not i.Mother.IsDead = True) Then Report.WritePhraseDic "PhDead", strName, strGender ' Indicate dead if no other death phrase and one or more parents alive.
 	End If
-
-	WriteNarrativeMFU i, collSiblings, "Sibling"
-	Dim collAdoptedByFather, collAdoptedByMother, cnt
-	Set collAdoptedByFather = Util.NewGenoCollection
-	Set collAdoptedByMother = Util.NewGenoCollection
-	If oRepertoryNonBio.KeyCounter("A:" & i.Family.ID) > 0 Then
-		collSiblings.Clear
-		Set oEntry = oRepertoryNonBio.Entry("A:" & i.Family.ID)
-		For cnt = 0 To oEntry.Count-1 Step 2
-			Set oLink = oEntry.Object(cnt)
-			If oLink.Child.Mother.ID = i.Mother.ID Then
-				collHalfSiblings.Add oEntry.Object(cnt+1)
-				collAdoptedByFather.Add oEntry.Object(cnt+1)
-			ElseIf oLink.Child.Father.ID = i.Father.ID Then
-				collHalfSiblings.Add oEntry.Object(cnt+1)
-				collAdoptedByMother.Add oEntry.Object(cnt+1)
-			Else
-				collSiblings.Add oEntry.Object(cnt+1)
-			End If
-		Next
-		WriteNarrativeMFU i, collSiblings, "SiblingAdopted"
-	End If
-
-	If oRepertoryNonBio.KeyCounter("F:" & i.Family.ID) > 0 Then	
-		collSiblings.Clear
-		Set oEntry = oRepertoryNonBio.Entry("F:" & i.Family.ID)
-		For cnt = 0 To oEntry.Count-1 Step 2
-			collSiblings.Add oEntry.Object(cnt+1)
-		Next
-		WriteNarrativeMFU i, collSiblings, "SiblingFoster"
-	End If
-
-	fOrdered = True
-	If (Not Util.IsNothing(f)) Then
-	If f.Children.OrderUnknown Then
-		fOrdered = False
-	ElseIf f.Children.Order.ToGenoCollection.Count = 0 Then
-		If  i.Birth.Date.ToStringNarrative = "" Then
-			fOrdered = False
-		Else
-			For Each c in i.Siblings.All.ToGenoCollection
-				If c.Birth.Date.ToStringNarrative = "" Then
-					fOrdered = False
-					Exit For
-				End If
-			Next
-		End If
-	End If
-	fEndOfLine = (f.FamilyLine.ID = "" Or f.FamilyLine.ID = "NoMoreChildren")
-	End If
-	Dim ChildrenGender, ChildTag
-	ChildrenGender = ""
-	ChildTag = "Child"
-	If cFemales = cChildren Then ChildrenGender = "F"
-	If cMales = cChildren Then ChildrenGender = "M"
-	If ChildrenGender <> "" Then ChildTag = GetDicMFU("Child", ChildrenGender)
-
-	If fOrdered And oRepertoryNonBio.KeyCounter("A:" & f.ID) = 0 And oRepertoryNonBio.KeyCounter("F:" & f.ID) = 0 And oRepertoryTwins.KeyCounter("F" & f.ID) = 0 Then
-			Report.WritePhrase StrDicMFU("PhChildRank", strGender), strPrefix, ToBe(i), strChildRank, strChildRank1, StrDicMFU("_Cardinal_" & cChildren, Util.IfElse(cFemales = cChildren, "F", "")), Util.IfElse(fEndOfLine,"", StrDicLookup2Attribute("Known_" & strGender, "Known", "P")), Dic.Plurial(ChildTag, cChildren), strGender, StrDicMFUAttribute("_Cardinal_" & cChildren, Util.IfElse(cFemales = cChildren, "F", ""), "TE")
-	End If
-	WriteNarrativeTwins i
-
-	WriteNarrativeAdoption i
-
-	WriteNarrativeMFU i, collHalfSiblings, "SiblingHalf"
-	Report.WritePhraseDic "PhAdoptedBy", i.Father.Session("HlinkNN"), StrHtmlNarrativeNamesShort(collAdoptedByFather)
-	Report.WritePhraseDic "PhAdoptedBy", i.Mother.Session("HlinkNN"), StrHtmlNarrativeNamesShort(collAdoptedByMother)
-
-End Sub
 */
-    Array.from(document.getElementsByClassName("individual-link")).forEach(function(element) {
+        let phrase = Parser.Phrase(Dic("PhDied",{gender: i.Gender.ID}), [
+            // {  }{\\U}{!0} died[ {6}[[{?6},\n][{?!6} due to] {7h}[{?6},\n]]][{?!8}[ at the age of {1}][{?!1}[ at {2} months old][{?!2} at just {3} days old]]]{4}{5h}.
+            /*0*/i.Pronoun("P"),
+            /*1*/i.Death.Age.Years,
+            /*2*/i.Death.Age.Months,
+            /*3*/i.Death.Age.Days,
+            /*4*/i.Death.Date.Narrative,
+            /*5*/i.Death.Place.Link,
+            /*6*/i.Death.Cause,
+            /*7*/parseText(i, i.Death.Cause.Description || '', false),
+            /*8*/i.Birth.Date.Approximation || i.Death.Date.Approximation,
+            /*9*/'',
+            /*10*/i.Gender.ID
+       ]);
+       if (phrase.length > 0) {
+        addNarrative(phrase);
+       } else if (!i.Father.IsDead || !i.Mother.IsDead) {
+        addNarrative(Parser.Phrase(Dic("PhDead",{gender: i.Gender.ID}), [
+            /*0*/i.Pronoun("P"),
+            /*1*/i.Gender.ID
+        ]));
+       }
+
+
+        Array.from(document.getElementsByClassName("individual-link")).forEach(function(element) {
       element.addEventListener('click', function() {
         console.log("Link clicked:", element.dataset.id);
         WriteIndividual(element.dataset.id)
